@@ -25,10 +25,7 @@ def get_teams(comp_list):
 		connection.request('GET',url, None, headers)
 		response = json.loads(connection.getresponse().read().decode())
 		for team in response['teams']:
-			if str(team['shortName'])== 'None':
-				team_list.append([team['_links']['self']['href'], team['name']])
-			else:
-				team_list.append([team['_links']['self']['href'], team['shortName']])
+			team_list.append([team['_links']['self']['href'], team['name']])
 	return team_list
 
 def get_team_fixt(team):
@@ -38,20 +35,31 @@ def get_team_fixt(team):
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
 	click.clear()
-	print('Fixtures')
-	print('-'.ljust(29,'-'))
+	upcoming_fixt = []
+	past_fixt = []
 	for fixture in response['fixtures']:
 		if str(fixture['result']['goalsHomeTeam']) == 'None':
-			fixture_string = '%s %s - %s' % (fixture['date'][:9], fixture['homeTeamName'], fixture['awayTeamName'])
+			fixture_string = '%s | %s -     %s' % (fixture['date'][:10].ljust(2,' '), fixture['homeTeamName'].ljust(25,' '), fixture['awayTeamName'])
+			upcoming_fixt.append(fixture_string)
 		else:
-			fixture_string = '%s %s - %s %s' % (fixture['homeTeamName'], fixture['result']['goalsHomeTeam'], fixture['result']['goalsAwayTeam'], fixture['awayTeamName'])
-		print(fixture_string)
+			fixture_string = '%s %s - %s %s' % (fixture['homeTeamName'].ljust(23,' '), fixture['result']['goalsHomeTeam'], str(fixture['result']['goalsAwayTeam']).ljust(4, ' '), fixture['awayTeamName'])
+			past_fixt.append(fixture_string)
+	print('-'.ljust(80,'-'))		
+	print('Past Fixtures'.rjust(45,' '))
+	print('-'.ljust(80,'-'))
+	for fixture in past_fixt:
+		print('%s %s' % (' '.ljust(12,' '),fixture))
+	print('-'.ljust(80,'-'))
+	print('Upcoming Fixtures'.rjust(47,' '))
+	print('-'.ljust(80,'-'))
+	for fixture in upcoming_fixt:
+		print(fixture)
+	print('-'.ljust(80,'-'))
 	while True:
-		if click.confirm('Would you like to return to the main menu?'):
+		if click.confirm('Would you like to see the players currently listed for %s' % team_name):
+			get_team_players(team)
+		elif click.confirm('\nWould you like to return to the main menu?'):
 			main(False)
-		else:
-			if click.confirm('Would you like to see the players currently listed for %s' % team_name):
-				get_team_players(team)
 
 def get_team_players(team):
 	team_id = team[0]
@@ -59,32 +67,50 @@ def get_team_players(team):
 	url = team_id + '/players/'
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
-	#todo finish this
+	print('\n-'.ljust(124,'-'))
+	print('Squad list'.rjust(60,' '))
+	print('-'.ljust(124,'-'))
+	print('%s | %s | %s | %s | %s | %s | %s' % ('#'.ljust(2,' '), 'Name'.ljust(25,' '), 'DOB'.ljust(10,' '), 'Nationality'.ljust(15,' '), 'Position'.ljust(20,' '), 'Transfer Value'.ljust(15,' '), 'Contract expiry'))
+	print('-'.ljust(124,'-'))
+	for player in response['players']:
+		if str(player['contractUntil']) == 'None':
+			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), 'Unavailable'))
+		elif str(player['jerseyNumber']) == 'None':
+			print('%s | %s | %s | %s | %s | %s EU | %s' % ('?'.ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
+		else:
+			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
+	print('-'.ljust(124,'-'))
+	while True:
+		if click.confirm('Would you like to see the fixtures currently listed for %s' % team_name):
+				get_team_fixt(team)
+		elif click.confirm('\nWould you like to return to the main menu?'):
+			main(False)
 
 def get_comp_table(comp):
 	comp_id = comp[0]
 	comp_name = comp[1]
-	url = '/v1/competitions/' + comp_id + '/leagueTable/'
+	url = '/v1/competitions/' + str(comp_id) + '/leagueTable/'
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
-	print('get_comp_table')
-	#todo finish this
+	
+	#todo finish this, PRINT COMP TO TEST
 
 def get_comp_fixt(comp):
 	comp_id = comp[0]
 	comp_name = comp[1]
-	url = '/v1/competitions/' + comp_id + '/fixtures/'
+	url = '/v1/competitions/' + str(comp_id) + '/fixtures/'
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
 	#todo finish this
 
 def search_db():
-	click.clear()
-	choice = click.prompt('What competition or team would you like information about?')
+	choice = click.prompt('\nWhat competition or team would you like information about?')
 	if choice.lower() == 'help':
 		click.clear()
 		print('help')
 		search_db()
+	elif choice.lower() == 'exit':
+		main(False)
 
 	team_comp = choice.split()
 	try:
@@ -100,10 +126,11 @@ def search_db():
 				command_list = ['table','standings','fixtures','schedule']
 				for cmd in command_list:
 					if command.lower() in cmd:
-						if cmd == 'table' or cmd == 'standings':
-							get_comp_table(comp)
-						elif cmd == 'fixtures' or cmd == 'schedule':
-							get_comp_fixt(comp)
+						if click.confirm('You\'ve selected %s, is that correct?' % cmd):
+							if cmd == 'table' or cmd == 'standings':
+								get_comp_table(comp)
+							elif cmd == 'fixtures' or cmd == 'schedule':
+								get_comp_fixt(comp)
 				else:
 					while True:
 						comp_choice = click.prompt('Would you like to the competition standings or the fixture list for %s?' % comp[1])
@@ -119,52 +146,66 @@ def search_db():
 										main(False)
 						else:
 							print('Sorry, that choice was not recognized. Try one of these: standings, table, fixtures, schedule, exit')
-			else:
-				print('another error')
 	else:
-		for n in range(len(team_comp)):
+		for n in range(30):
 			for team in team_list:
 				if team_comp.lower() in team[1].lower() and team[1][n:n+len(team_comp)].lower() == team_comp.lower():
-					if click.confirm('Is this the team you wanted? %s ' % team[1]):  
-						if command == 'fixtures' or command == 'schedule':
-							get_team_fixt(team)
-						elif command == 'players' or command == 'squad' or command == 'team':
-							get_team_players(team)
-						elif command == team_comp:
-							teamchoice = click.prompt('Would you like to see the fixtures for %s, or their squad?' % team[1], type=click.Choice(['fixtures', 'schedule', 'players','squad']))
-							if teamchoice == 'fixtures' or teamchoice == 'schedule':
-								get_team_fixt(team)
-							elif teamchoice == 'squad' or teamchoice == 'players':
-								get_team_players(team)
+					if click.confirm('Is this the team you wanted? %s ' % team[1]): 
+						command_list = ['fixtures','schedule','players','team','squad']
+						for cmd in command_list:
+							if command.lower() in cmd:
+								if click.confirm('You\'ve selected %s, is that correct?' % cmd):
+									if cmd == 'fixtures' or cmd == 'schedule':
+										get_team_fixt(team)
+									elif cmd == 'players' or cmd == 'squad' or cmd == 'team':
+										get_team_players(team)
+
 						else:
-							print('Enter a valid command for a team next time, or just enter the team name.')
+							while True:
+								team_choice = click.prompt('Would you like to view the fixtures for %s, or their squad?' % team[1])
+								team_choice_list = ['fixtures', 'schedule', 'squad', 'players', 'team', 'exit']
+								for poss_choice in team_choice_list:
+									if team_choice.lower() in poss_choice:
+										if click.confirm('You\'ve selected %s, is that correct?' % poss_choice):
+											if poss_choice == 'fixtures' or poss_choice == 'schedule':
+												get_team_fixt(team)
+											elif poss_choice == 'squad' or poss_choice == 'players' or poss_choice == 'team':
+												get_team_players(team)
+											elif poss_choice == 'exit':
+												main(False)
+								else:
+									print('Sorry, that choice was not recognized. Try one of these: fixtures, schedule, squad, players, team, exit')
 		else:
 			print('Unable to find that team/competition. Please try again. \n')
-			#main(False)
+			search_db()
 
+
+#todo add saving/loading favorites with a favorites file, finish the other 4 functions (2 league funcs, 1 team func), clean up, add more??
 def main(flag):
 	global comp_list
 	global team_list
 	if not flag:
 		click.clear()
-	print('Welcome to shellScore. Please wait while we load leagues and teams.')
+		print('-'.ljust(70,'-'))
+		print('Welcome to shellScore.')
+		print('-'.ljust(70,'-'))
+	if flag:
+		print('-'.ljust(70,'-'))
+		print('Welcome to shellScore. Please wait while we load leagues and teams.')
+		print('-'.ljust(70,'-'))
 	if flag:
 		comp_list = get_comps()
 		team_list = get_teams(comp_list)
-	
-
 	while True:
-		choice = click.prompt('\nWhat would you like to do?')
+		choice = click.prompt('What would you like to do?')
 		if choice.lower() == 'help':
-			print('\nhelp')
+			print('\nAvailable commands: help, comps, search, exit')
+			print('-'.ljust(70,'-'))
 		elif choice.lower() == 'comps':
-			print('\nHere are all available competitions: ')
-			for comp in comp_list:
-				print(comp[1])
-		elif choice.lower() == 'teams':
-			print('\nHere are all available teams: ')
-			for team in team_list:
-				print(team[1])
+			print('\nHere are all available competitions:\n')
+			for n in range(0,len(comp_list)-3,3):
+				print('%s %s %s' % (comp_list[n][1].ljust(35,' '), comp_list[n+1][1].ljust(35,' '), comp_list[n+2][1]))
+			print('-'.ljust(100,'-'))
 		elif choice.lower() == 'search':
 			search_db()
 		elif choice.lower() == 'exit':
