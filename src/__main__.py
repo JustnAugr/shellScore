@@ -1,11 +1,11 @@
+#!/usr/bin/env python3
 import http.client
 import json
 import click
 import sys
-#testing
 
 connection = http.client.HTTPConnection('api.football-data.org')
-apikey = open('src/apikey.txt').read() #hidden for github upload, to get your own go to http://api.football-data.org
+apikey = open('apikey.txt').read() #hidden for github upload, to get your own go to http://api.football-data.org
 headers = { 'X-Auth-Token': apikey}
 
 
@@ -42,7 +42,8 @@ def get_team_fixt(team):
 			fixture_string = '%s | %s -     %s' % (fixture['date'][:10].ljust(2,' '), fixture['homeTeamName'].ljust(25,' '), fixture['awayTeamName'])
 			upcoming_fixt.append(fixture_string)
 		else:
-			fixture_string = '%s %s - %s %s' % (fixture['homeTeamName'].ljust(23,' '), fixture['result']['goalsHomeTeam'], str(fixture['result']['goalsAwayTeam']).ljust(4, ' '), fixture['awayTeamName'])
+			fixture_string = '%s %s - %s %s' % (fixture['homeTeamName'].ljust(23,' '), fixture['result']['goalsHomeTeam'], 
+				str(fixture['result']['goalsAwayTeam']).ljust(4, ' '), fixture['awayTeamName'])
 			past_fixt.append(fixture_string)
 	print('-'.ljust(80,'-'))		
 	print('Past Fixtures'.rjust(45,' '))
@@ -70,15 +71,20 @@ def get_team_players(team):
 	print('\n-'.ljust(124,'-'))
 	print('Squad list'.rjust(60,' '))
 	print('-'.ljust(124,'-'))
-	print('%s | %s | %s | %s | %s | %s | %s' % ('#'.ljust(2,' '), 'Name'.ljust(25,' '), 'DOB'.ljust(10,' '), 'Nationality'.ljust(15,' '), 'Position'.ljust(20,' '), 'Transfer Value'.ljust(15,' '), 'Contract expiry'))
+	print('%s | %s | %s | %s | %s | %s | %s' % ('#'.ljust(2,' '), 'Name'.ljust(25,' '), 'DOB'.ljust(10,' '), 'Nationality'.ljust(15,' '),
+	 'Position'.ljust(20,' '), 'Transfer Value'.ljust(15,' '), 'Contract expiry'))
 	print('-'.ljust(124,'-'))
 	for player in response['players']:
 		if str(player['contractUntil']) == 'None':
-			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), 'Unavailable'))
+			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), 
+				player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), 
+				player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), 'Unavailable'))
 		elif str(player['jerseyNumber']) == 'None':
-			print('%s | %s | %s | %s | %s | %s EU | %s' % ('?'.ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
+			print('%s | %s | %s | %s | %s | %s EU | %s' % ('?'.ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], 
+				player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
 		else:
-			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
+			print('%s | %s | %s | %s | %s | %s EU | %s' % (str(player['jerseyNumber']).ljust(2,' '), player['name'].ljust(25,' '), 
+				player['dateOfBirth'], player['nationality'].ljust(20,' '), player['position'].ljust(20,' '), player['marketValue'][:len(player['marketValue'])-1].ljust(15,' '), player['contractUntil']))
 	print('-'.ljust(124,'-'))
 	while True:
 		if click.confirm('Would you like to see the fixtures currently listed for %s' % team_name):
@@ -92,6 +98,27 @@ def get_comp_table(comp):
 	url = '/v1/competitions/' + str(comp_id) + '/leagueTable/'
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
+	try:
+		response['standing']
+	except KeyError:
+		print('Sorry, that competition\'s standings weren\'t available. Try again at a later date and we might have updated!')
+		search_db()
+	else:
+		print(' %s| %s|  %s|  %s|  %s|  %s|  %s|  %s|  %s| %s |' % ('Pos'.ljust(3,' '),'Name'.ljust(26,' '),'P'.ljust(2, ' '),'W'.ljust(2,' '),'D'.ljust(2,' '),'L'.ljust(2,' '),'GF'.ljust(3,' '),'GA'.ljust(3,' '),'GD'.ljust(3,' '),'PTs'.ljust(3,' ')))
+		for table_place in response['standing']:
+			#      pos, name, win, draw, loss, GF, GA, GD, points
+			#       1    2     3     4    5     6   7   8   9
+			if str(table_place['goalDifference'])[0] == '-':
+				print('%s | %s | %s| %s| %s| %s|%s|%s|%s| %s|' % (str(table_place['position']).center(3,' '), table_place['teamName'].ljust(25,' '), 
+					str(table_place['playedGames']).center(3,' '), str(table_place['wins']).center(3,' '), 
+					str(table_place['draws']).center(3,' '), str(table_place['losses']).center(3,' '), str(table_place['goals']).center(5,' '), str(table_place['goalsAgainst']).center(5,' '), 
+					str(table_place['goalDifference']).center(5,' '), str(table_place['points']).ljust(4,' ')))
+			else:
+				print('%s | %s | %s| %s| %s| %s|%s|%s|%s| %s|' % (str(table_place['position']).center(3,' '), table_place['teamName'].ljust(25,' '), 
+					str(table_place['playedGames']).center(3,' '), str(table_place['wins']).center(3,' '), 
+					str(table_place['draws']).center(3,' '), str(table_place['losses']).center(3,' '), str(table_place['goals']).center(5,' '), str(table_place['goalsAgainst']).center(5,' '), 
+					('+' + str(table_place['goalDifference'])).center(5,' '), str(table_place['points']).ljust(4,' ')))
+
 	
 	#todo finish this, PRINT COMP TO TEST
 
@@ -203,8 +230,8 @@ def main(flag):
 			print('-'.ljust(70,'-'))
 		elif choice.lower() == 'comps':
 			print('\nHere are all available competitions:\n')
-			for n in range(0,len(comp_list)-3,3):
-				print('%s %s %s' % (comp_list[n][1].ljust(35,' '), comp_list[n+1][1].ljust(35,' '), comp_list[n+2][1]))
+			for comp in comp_list:
+				print(comp[1])
 			print('-'.ljust(100,'-'))
 		elif choice.lower() == 'search':
 			search_db()
