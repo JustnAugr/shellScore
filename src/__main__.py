@@ -119,8 +119,7 @@ def get_comp_table(comp):
 					str(table_place['draws']).center(3,' '), str(table_place['losses']).center(3,' '), str(table_place['goals']).center(5,' '), str(table_place['goalsAgainst']).center(5,' '), 
 					('+' + str(table_place['goalDifference'])).center(5,' '), str(table_place['points']).ljust(4,' ')))
 
-	
-	#todo finish this, PRINT COMP TO TEST
+
 
 def get_comp_fixt(comp):
 	comp_id = comp[0]
