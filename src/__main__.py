@@ -101,9 +101,10 @@ def get_comp_table(comp):
 	try:
 		response['standing']
 	except KeyError:
-		print('Sorry, that competition\'s standings weren\'t available. Try again at a later date and we might have updated!')
+		print('\nSorry, that competition\'s standings weren\'t available. Try again at a later date and we might have updated!')
 		search_db()
 	else:
+		print('\n-'.ljust(78,'-'))	
 		print(' %s| %s|  %s|  %s|  %s|  %s|  %s|  %s|  %s| %s |' % ('Pos'.ljust(3,' '),'Name'.ljust(26,' '),'P'.ljust(2, ' '),'W'.ljust(2,' '),'D'.ljust(2,' '),'L'.ljust(2,' '),'GF'.ljust(3,' '),'GA'.ljust(3,' '),'GD'.ljust(3,' '),'PTs'.ljust(3,' ')))
 		for table_place in response['standing']:
 			#      pos, name, win, draw, loss, GF, GA, GD, points
@@ -118,7 +119,12 @@ def get_comp_table(comp):
 					str(table_place['playedGames']).center(3,' '), str(table_place['wins']).center(3,' '), 
 					str(table_place['draws']).center(3,' '), str(table_place['losses']).center(3,' '), str(table_place['goals']).center(5,' '), str(table_place['goalsAgainst']).center(5,' '), 
 					('+' + str(table_place['goalDifference'])).center(5,' '), str(table_place['points']).ljust(4,' ')))
-
+		print('-'.ljust(77,'-'))		
+	while True:
+		if click.confirm('Would you like to see the fixtures currently listed for %s' % comp_name):
+			get_comp_fixt(comp)
+		elif click.confirm('\nWould you like to return to the main menu?'):
+			main(False)
 
 
 def get_comp_fixt(comp):
@@ -127,7 +133,32 @@ def get_comp_fixt(comp):
 	url = '/v1/competitions/' + str(comp_id) + '/fixtures/'
 	connection.request('GET',url, None, headers)
 	response = json.loads(connection.getresponse().read().decode())
-	#todo finish this
+	upcoming_fixt = []
+	past_fixt = []
+	for fixture in response['fixtures']:
+		if fixture['status'] == 'SCHEDULED':
+			fixture_string = '%s | %s -     %s' % (fixture['date'][:10].ljust(2,' '), fixture['homeTeamName'].ljust(25,' '), fixture['awayTeamName'])
+			upcoming_fixt.append(fixture_string)
+		elif fixture['status'] == 'FINISHED':
+			fixture_string = '%s %s - %s %s' % (fixture['homeTeamName'].ljust(23,' '), fixture['result']['goalsHomeTeam'], 
+				str(fixture['result']['goalsAwayTeam']).ljust(4, ' '), fixture['awayTeamName'])
+			past_fixt.append(fixture_string)
+	print('\n--'.ljust(80,'-'))		
+	print('Past Fixtures'.rjust(45,' '))
+	print('-'.ljust(80,'-'))
+	for fixture in past_fixt:
+		print('%s %s' % (' '.ljust(12,' '),fixture))
+	print('-'.ljust(80,'-'))
+	print('Upcoming Fixtures'.rjust(47,' '))
+	print('-'.ljust(80,'-'))
+	for fixture in upcoming_fixt:
+		print(fixture)
+	print('-'.ljust(80,'-'))
+	while True:
+		if click.confirm('Would you like to see the league table for %s' % comp_name):
+			get_comp_table(comp)
+		elif click.confirm('\nWould you like to return to the main menu?'):
+			main(False)
 
 def search_db():
 	choice = click.prompt('\nWhat competition or team would you like information about?')
@@ -206,18 +237,28 @@ def search_db():
 			search_db()
 
 
-#todo add saving/loading favorites with a favorites file, finish the other 4 functions (2 league funcs, 1 team func), clean up, add more??
+#todo add saving/loading favorites with a favorites file, clean up
 def main(flag):
 	global comp_list
 	global team_list
 	if not flag:
 		click.clear()
 		print('-'.ljust(70,'-'))
-		print('Welcome to shellScore.')
+		print('Welcome to shellScore.'
+				'\n                 _          _ _ __                    '
+				'\n             ___| |__   ___| | / _\ ___ ___  _ __ ___ '
+				'\n            / __| \'_ \ / _ \ | \ \ / __/ _ \| \'__/ _ \\'
+				'\n            \__ \ | | |  __/ | |\ \ (_| (_) | | |  __/'
+				'\n            |___/_| |_|\___|_|_\__/\___\___/|_|  \___|')
 		print('-'.ljust(70,'-'))
 	if flag:
 		print('-'.ljust(70,'-'))
-		print('Welcome to shellScore. Please wait while we load leagues and teams.')
+		print('Welcome to shellScore. Please wait while we load leagues and teams.'
+				'\n                 _          _ _ __                    '
+				'\n             ___| |__   ___| | / _\ ___ ___  _ __ ___ '
+				'\n            / __| \'_ \ / _ \ | \ \ / __/ _ \| \'__/ _ \\'
+				'\n            \__ \ | | |  __/ | |\ \ (_| (_) | | |  __/'
+				'\n            |___/_| |_|\___|_|_\__/\___\___/|_|  \___|')
 		print('-'.ljust(70,'-'))
 	if flag:
 		comp_list = get_comps()
