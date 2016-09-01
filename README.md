@@ -4,6 +4,8 @@ written using http://api.football-data.org/index, a great API
 ##Description
 A Python based project revolving around getting the scores, league, and player data for Football (or soccer) competitions around the world. Initially for personal use a means of staying updated on when my favorite teams are playing, and being able to easily find results at a few keystrokes.
 
+
+![alt text](http://i.imgur.com/61JZT3D.gif "shellScore Demo by Justin Auger")
 ##Use
 After running the program you can use `> search` to search the database, `> comps` to see a list of supported competitions, `> help` for a quick recap on what you can do, and `> exit`,
 
